@@ -204,9 +204,9 @@ def download(url: str, dest_dir: str = ENV['DOWNLOADS_DIR']):
         os.remove(dest_path)
     response = requests.get(url, stream=True)
     with open(dest_path, 'wb') as f:
-        for chunk in tqdm(response.iter_content(chunk_size=1024))
-        if chunk:  # filter out keep-alive new chunks
-            f.write(chunk)
+        for chunk in tqdm(response.iter_content(chunk_size=1024)):
+            if chunk:  # filter out keep-alive new chunks
+                f.write(chunk)
     if not Path.exists(dest_path):
         raise Exception('failed to download ' + url)
 

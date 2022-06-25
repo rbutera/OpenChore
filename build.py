@@ -19,7 +19,7 @@ ENV = environment.get_env()
 DEFAULT_VERSION = "0.8.1"
 
 HACKINTOSH_ROOT = Path(ENV['HACKINTOSH_ROOT'])
-UPDATED_DIR = Path(HACKINTOSH_ROOT / 'updated')
+UPDATED_DIR = Path(ENV['UPDATED_DIR'])
 DOWNLOADS_DIR = Path(ENV['DOWNLOADS_DIR'])
 USER_EFI_DIR = Path(ENV['USER_EFI_DIR'])
 USER_OPENCORE_DIR = Path(ENV['USER_OPENCORE_DIR'])
@@ -43,9 +43,9 @@ def create_directories():
 
 def print_diagnostics(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool = False, vault: bool = True, backup: bool = True, write: bool = False):
     echo(style('Diagnostics:', bold=True))
-    echo('Boot volume name is ' + BOOT_VOLUME_NAME)
-    echo('Backup volume name is ' + BACKUP_VOLUME_NAME)
-    echo('Hackintosh root is ' + HACKINTOSH_ROOT)
+    echo('Boot volume name is ' + str(BOOT_VOLUME_NAME))
+    echo('Backup volume name is ' + str(BACKUP_VOLUME_NAME))
+    echo('Hackintosh root is ' + str(HACKINTOSH_ROOT))
     echo(style(f'OpenCore version: {version}', fg='green'))
     echo(style(f'release: {release}', fg='green'))
     sign_msg = 'Will sign for UEFI secure boot' if sign else style(

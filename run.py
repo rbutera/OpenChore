@@ -17,7 +17,9 @@ def run(commands: list[str]) -> int:
     input = ['/bin/zsh', '-c', commands]
     input_str = ' '.join(input)
     echo(f'will run "{input_str}"')
-    os.system(input_str)
+    completed = subprocess.run(input_str, shell=True, env=ENV, check=True)
+    print(completed)
+    return completed.returncode
 
 
 def multipass(command: str) -> int:

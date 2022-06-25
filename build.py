@@ -134,8 +134,8 @@ def validate_config(vault: bool):
     ocvalidate_path = Path(f'{DOWNLOADS_DIR}/Utilities/ocvalidate/ocvalidate')
     config_path = get_config_path()
     Path.chmod(ocvalidate_path, 0o777)
-    valid = run([ocvalidate_path, config_path])
-    if not valid:
+    invalid = run([ocvalidate_path, config_path])
+    if invalid:
         raise Exception(
             'ocvalidate returned a non-zero exit code. Please run ocvalidate manually for more information.')
     config_plist = parse_config_file(USER_OPENCORE_DIR)

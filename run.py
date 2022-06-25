@@ -21,4 +21,5 @@ def run(commands: list[str]) -> int:
 
 
 def multipass(command: str) -> int:
-    return run([f"multipass exec sh -c '{command}'"])
+    mn = ENV["MULTIPASS_NAME"]
+    return run([f"multipass {mn} exec sh -c '{command}'"])

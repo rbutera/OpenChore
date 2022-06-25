@@ -100,7 +100,7 @@ def user_or_updated(path: Path):
 
 def get_user_drivers_list_with_updates():
     user_drivers = get_user_drivers_list()
-    return user_drivers.map(lambda driver: user_or_updated(driver))
+    return map(lambda driver: user_or_updated(driver), user_drivers)
 
 
 def copy_user_files(update: bool = True):

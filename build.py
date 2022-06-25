@@ -187,7 +187,7 @@ def make_vault(signed: bool = True):
     return output
 
 
-def check_vault(signed?: bool = True):
+def check_vault(signed: bool = True):
     dir = SIGNED_DIR if signed else USER_EFI_DIR
     files = ['vault.plist', 'vault.sig'].map(lambda x: Path(dir) / 'OC' / x)
     for file in files:

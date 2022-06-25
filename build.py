@@ -131,7 +131,7 @@ def copy_user_files(update: bool = True):
 
 def validate_config(vault: bool):
     # run ocvalidate
-    ocvalidate_path = Path(f'{DOWNLOADS_DIR}/Utilities/ocvalidate')
+    ocvalidate_path = Path(f'{DOWNLOADS_DIR}/Utilities/ocvalidate/ocvalidate')
     config_path = get_config_path()
     Path.chmod(ocvalidate_path, 0o777)
     valid = run([ocvalidate_path, config_path])

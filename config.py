@@ -24,7 +24,7 @@ def open_config(dir: Path = USER_OPENCORE_DIR):
 
 def parse_config_file(dir: Path = USER_OPENCORE_DIR):
     config_plist = open_config(dir)
-    output = plistlib.load(config_plist, fmt="FMT_XML")
+    output = plistlib.load(config_plist, fmt=plistlib.FMT_XML)
     config_plist.close()
     return output
 
@@ -34,4 +34,4 @@ def write_config_file(config: dict, dir: Path = USER_OPENCORE_DIR):
     if Path(out).exists():
         os.remove(out)
     fp = open(out, 'wb')
-    plistlib.dump(config, fp, fmt="FMT_XML", sort_keys=False)
+    plistlib.dump(config, fp, fmt=plistlib.FMT_XML, sort_keys=False)

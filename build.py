@@ -167,7 +167,7 @@ def check_signed(files: list = []) -> bool:
     return code == 0
 
 
-def make_vault(signed?: bool = True):
+def make_vault(signed: bool = True):
     utilities = Path(DOWNLOADS_DIR / 'Utilities' / 'CreateVault')
     os.system('cp -Rv ' + utilities + ' ' + HACKINTOSH_ROOT + '/')
     if signed:

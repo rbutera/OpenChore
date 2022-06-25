@@ -305,7 +305,7 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
         mount_efi(BOOT_VOLUME_NAME)
         # backup current efi to file
         filename = Path(os.getcwd() + '/backups/' + date_filename())
-        echo('Backing up current EFI to ' filename)
+        echo('Backing up current EFI to ' + filename)
         BACKUPS_DIR = os.getcwd() + '/backups'
         os.system(f'mkdir -p {BACKUPS_DIR}/{filename}')
         os.system(f'rm -rf {BACKUPS_DIR}/{filename}/*')

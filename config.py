@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import Path
+from pathlib import Path
 import os
 from click import *
 import plistlib

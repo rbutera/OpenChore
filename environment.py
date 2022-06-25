@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import os
 from dotenv import load_dotenv
 from pprint import pprint
 load_dotenv()
@@ -13,7 +13,7 @@ def build_env():
     ENV['KEYS_DIR'] = ENV["HACKINTOSH_ROOT"] + "/keys"
     ENV['SIGNED_DIR'] = ENV["HACKINTOSH_ROOT"] + "/signed"
     ENV['DOWNLOADS_DIR'] = ENV["HACKINTOSH_ROOT"] + "/download"
-    ENV['DOWNLOADED_EFI_DIR'] = ENV["$DOWNLOADS_DIR"] + "/X64/EFI"
+    ENV['DOWNLOADED_EFI_DIR'] = ENV["DOWNLOADS_DIR"] + "/X64/EFI"
     ENV['USER_EFI_DIR'] = ENV["HACKINTOSH_ROOT"] + "/EFI"
     ENV['USER_OPENCORE_DIR'] = ENV["USER_EFI_DIR"] + "/OC"
     ENV['USER_OPENCORE_DRIVERS_DIR'] = ENV["USER_OPENCORE_DIR"] + "/Drivers"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 from pprint import pprint
 load_dotenv()
 
@@ -9,7 +9,10 @@ ENV = {}
 
 def build_env():
     global ENV
-    ENV = os.environ.copy()
+    values = dotenv_values(".env").items()
+    for key, value in values:
+        ENV[key] = value
+
     ENV['KEYS_DIR'] = ENV["HACKINTOSH_ROOT"] + "/keys"
     ENV['SIGNED_DIR'] = ENV["HACKINTOSH_ROOT"] + "/signed"
     ENV['DOWNLOADS_DIR'] = ENV["HACKINTOSH_ROOT"] + "/download"
@@ -17,6 +20,7 @@ def build_env():
     ENV['USER_EFI_DIR'] = ENV["HACKINTOSH_ROOT"] + "/EFI"
     ENV['USER_OPENCORE_DIR'] = ENV["USER_EFI_DIR"] + "/OC"
     ENV['USER_OPENCORE_DRIVERS_DIR'] = ENV["USER_OPENCORE_DIR"] + "/Drivers"
+
     return ENV
 
 

@@ -133,6 +133,7 @@ def validate_config(vault: bool):
     # run ocvalidate
     ocvalidate_path = Path(f'{DOWNLOADS_DIR}/Utilities/ocvalidate')
     config_path = get_config_path()
+    Path.chmod(ocvalidate_path, 0o777)
     valid = run([ocvalidate_path, config_path])
     if not valid:
         raise Exception(
@@ -227,13 +228,13 @@ def download_dependencies(version: str = DEFAULT_VERSION, release: str = "RELEAS
     download(
         f'https://github.com/acidanthera/OpenCorePkg/releases/download/{version}/OpenCore-{version}-{release}.zip', ENV['DOWNLOADS_DIR'])
     # unzip opencore
-    run(['unzip', '-o',
+    run(['/usr/bin/unzip', '-o',
         f'{str(DOWNLOADS_DIR)}/OpenCore-{version}-{release}.zip', '-d', str(DOWNLOADS_DIR)])
-    if not '{DOWNLOADS_DIR}/X64/EFI/OC/OpenCore.efi'.exists():
+    if not Path(f'{DOWNLOADS_DIR}/X64/EFI/OC/OpenCore.efi').exists():
         raise Exception('could not find downloaded OpenCore.efi')
     else:
         click.echo('Successfully extracted OpenCore release')
-    for file in glob(DOWNLOADS_DIR + '/*.zip'):
+    for file in glob(f'{DOWNLOADS_DIR}/*.zip'):
         click.echo('cleaning up ' + str(file))
         os.remove(file)
     download('https://github.com/acidanthera/OcBinaryData/raw/master/Drivers/HfsPlus.efi',
@@ -320,7 +321,8 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
         os.system(f'mkdir -p {BACKUPS_DIR}/{filename}')
         os.system(f'rm -rf {BACKUPS_DIR}/{filename}/*')
         os.system(f'cp -Rv /Volumes/EFI/EFI/* {BACKUPS_DIR}/{filename}')
-        run(['7z a {BACKUPS_DIR}/{filename}/* {BACKUPS_DIR}/{filename}.7z'])
+        run([
+            '/usr/local/bin/7z a {BACKUPS_DIR}/{filename}/* {BACKUPS_DIR}/{filename}.7z'])
         click.echo('Backed up current efi to {BACKUPS_DIR}/{filename}.7z')
         unmount_efi(BOOT_VOLUME_NAME)
         if backup:

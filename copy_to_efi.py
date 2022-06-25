@@ -1,11 +1,15 @@
 #!/usr/bin/env python
-import glob
+import click
+from glob import glob
 import logging as log
 import os
 import shutil
 from pathlib import Path
+import environment
+ENV = environment.get_env()
+USER_EFI_DIR = ENV['USER_EFI_DIR']
+SIGNED_DIR = ENV['SIGNED_DIR']
 
-import click
 
 cwd = Path.cwd()
 log.debug(f"Current working directory is {cwd}")
@@ -41,16 +45,10 @@ def check_src(input_dir):
 
 
 @click.command()
-@click.option("--signed/--unsigned", default=False, help="Use signed directory?")
+@click.option("--input_volume", default=USER_EFI_DIR, help=f"e.g. {USER_EFI_DIR}")
 @click.option("--output_volume", default="/Volumes/EFI", help="e.g. /Volumes/EFI")
-@click.confirmation_option(prompt="Are you sure?")
-def copy_to_efi(signed: bool = False, output_volume: str = "/Volumes/EFI"):
-    message = (
-        "Copying " + "signed "
-        if signed
-        else "(unsigned) " + "EFI and BOOT directories to /Volumes/EFI/"
-    )
-    src_path = Path(cwd / "signed" if signed else cwd / "EFI")
+def copy_to_efi(input_dir: Path = USER_EFI_DIR, output_volume: str = "/Volumes/EFI") -> int:
+    src_path = Path(input_dir)
     click.echo(f"{message}\nUsing source path {src_path}")
     if not Path.exists(src_path):
         raise Exception(f"source path {src_path} is missing")
@@ -67,6 +65,7 @@ def copy_to_efi(signed: bool = False, output_volume: str = "/Volumes/EFI"):
     if code != 0:
         raise Exception(f"copy command returned non-zero code: {code}")
     click.echo("Completed successfully")
+    return code
 
 
 if __name__ == "__main__":

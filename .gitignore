@@ -103,6 +103,7 @@ celerybeat.pid
 
 # Environments
 .env
+!.env.example
 .venv
 env/
 venv/
@@ -127,3 +128,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.backups/*

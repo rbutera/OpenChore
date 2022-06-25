@@ -34,9 +34,9 @@ temp_directories = [DOWNLOADS_DIR, SIGNED_DIR, UPDATED_DIR]
 
 def create_directories():
     for dir in temp_directories:
-        if not dir.exists():
-            click.echo('creating ' + dir)
-            os.mkdir(dir)
+        os.system('rm -rf ' + str(dir))
+        click.echo('creating ' + str(dir))
+        os.mkdir(dir)
     # make signed subdirs
     for dir in ["OC", "BOOT"]:
         os.mkdir(SIGNED_DIR / dir)
@@ -113,15 +113,15 @@ def copy_user_files(update: bool = True):
         UPDATED_OC_DRIVERS_DIR = UPDATED_DIR / 'OC/Drivers'
         for file in glob(f'{UPDATED_OC_DRIVERS_DIR}/*.efi'):
             os.remove(file)
-            click.echo('Removed ' + file)
+            click.echo('Removed ' + str(file))
         click.echo(
             'Finished purging all OpenCore drivers. Now inserting existing or updated if available')
         user_drivers = get_user_drivers_list_with_updates()
         for file in user_drivers:
             click.echo(
                 f'copying {file} to {UPDATED_OC_DRIVERS_DIR}/{file.name}')
-            os.system('cp ' + file + ' ' +
-                      UPDATED_OC_DRIVERS_DIR + '/' + file.name)
+            os.system('cp ' + str(file) + ' ' +
+                      UPDATED_OC_DRIVERS_DIR + '/' + str(file).name)
         click.echo('Finished copying user files to updated directory')
         os.system('mv ' + USER_EFI_DIR + ' ' + 'EFI_TEMP')
         os.system('mv ' + UPDATED_DIR + ' ' + 'EFI')
@@ -196,24 +196,24 @@ def make_vault(signed: bool = True):
 
 def check_vault(signed: bool = True):
     dir = SIGNED_DIR if signed else USER_EFI_DIR
-    files = ['vault.plist', 'vault.sig'].map(
-        lambda x: Path(dir) / 'OC' / x)
+    files = list(map(lambda x: Path(dir) / 'OC' / x),
+                 ['vault.plist', 'vault.sig'])
     for file in files:
         if not file.exists():
-            raise Exception('could not find ' + file)
+            raise Exception('could not find ' + str(file))
 
 
 def download(url: str, dest_dir: str = ENV['DOWNLOADS_DIR']):
     file_name = url.split("/")[-1]
     dest_path = Path(dest_dir) / file_name
     click.echo(click.style('Downloading ' + url +
-               ' to ' + dest_path, fg='green'))
+               ' to ' + str(dest_path), fg='green'))
     if dest_path.exists():
-        click.echo('cleaning up ' + dest_path + ' before downloading')
+        click.echo('cleaning up ' + str(dest_path) + ' before downloading')
         os.remove(dest_path)
     response = requests.get(url, stream=True)
     with open(dest_path, 'wb') as f:
-        for chunk in tqdm(response.iter_content(chunk_size=1024)):
+        for chunk in response.iter_content(chunk_size=1024):
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
     if not dest_path.exists():
@@ -234,7 +234,7 @@ def download_dependencies(version: str = DEFAULT_VERSION, release: str = "RELEAS
     else:
         click.echo('Successfully extracted OpenCore release')
     for file in glob(DOWNLOADS_DIR + '/*.zip'):
-        click.echo('cleaning up ' + file)
+        click.echo('cleaning up ' + str(file))
         os.remove(file)
     download('https://github.com/acidanthera/OcBinaryData/raw/master/Drivers/HfsPlus.efi',
              DOWNLOADED_DRIVERS_DIR)
@@ -243,11 +243,11 @@ def download_dependencies(version: str = DEFAULT_VERSION, release: str = "RELEAS
 
 
 def check_keys():
-    isk_files = ['key', 'pem'].map(lambda ext: KEYS_DIR / f'ISK.{ext}')
+    isk_files = list(map(lambda ext: KEYS_DIR / f'ISK.{ext}', ['key', 'pem']))
     for file in isk_files:
         if not file.exists():
-            raise Exception('could not find ' + file)
-        click.echo("Found " + file)
+            raise Exception('could not find ' + str(file))
+        click.echo("Found " + str(file))
     pass
 
 
@@ -290,6 +290,7 @@ def date_filename():
 @click.option('--update', default=True)
 def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool = False, vault: bool = True, backup: bool = False, write: bool = False, update: bool = True):
     print_diagnostics(version, release, sign, vault, backup, write)
+    create_directories()
     # validate config.plist
     # TODO: do apecid
     check_keys()
@@ -314,7 +315,7 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
         mount_efi(BOOT_VOLUME_NAME)
         # backup current efi to file
         filename = Path(os.getcwd() + '/backups/' + date_filename())
-        click.echo('Backing up current EFI to ' + filename)
+        click.echo('Backing up current EFI to ' + str(filename))
         BACKUPS_DIR = os.getcwd() + '/backups'
         os.system(f'mkdir -p {BACKUPS_DIR}/{filename}')
         os.system(f'rm -rf {BACKUPS_DIR}/{filename}/*')
@@ -336,6 +337,7 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
             copy_to_efi.copy_to_efi(path_to_copy, '/Volumes/EFI')
             unmount_efi(BOOT_VOLUME_NAME)
     click.echo(click.style('Done!', fg='green', bold=True, blink=True))
+    cleanup()
 
 
 if __name__ == '__main__':

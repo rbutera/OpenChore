@@ -17,7 +17,7 @@ log.debug(f"Current working directory is {cwd}")
 
 def clean_dest(volume_path):
     path = volume_path / "EFI"
-    if not Path.exists(path):
+    if not Path(path).exists():
         click.echo(f"creating {path}")
         Path.mkdir(path)
     try:
@@ -28,7 +28,7 @@ def clean_dest(volume_path):
 
 
 def check_exists(input):
-    if not Path.exists(input):
+    if not Path(input).exists():
         raise Exception(f"{input} is missing")
     log.debug(f"Detected {input} exists")
 
@@ -50,11 +50,11 @@ def check_src(input_dir):
 def copy_to_efi(input_dir: Path = USER_EFI_DIR, output_volume: str = "/Volumes/EFI") -> int:
     src_path = Path(input_dir)
     click.echo(f"{message}\nUsing source path {src_path}")
-    if not Path.exists(src_path):
+    if not Path(src_path).exists():
         raise Exception(f"source path {src_path} is missing")
     check_src(src_path)
     dest_path = Path(output_volume)
-    if not Path.exists(dest_path):
+    if not Path(dest_path).exists():
         raise Exception(f'Missing destination volume "{output_volume}"')
 
     clean_dest(dest_path)

@@ -7,6 +7,7 @@ ENV = environment.get_env()
 
 def run(commands: list[str]) -> int:
     commands = map(lambda x: str(x), commands)
+    commands = list(commands)
     input = ['/bin/bash'] + commands
     input_str = ' '.join(input)
     echo(f'will run "{input_str}"')

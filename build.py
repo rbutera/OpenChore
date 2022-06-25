@@ -100,7 +100,7 @@ def user_or_updated(path: Path):
 
 def get_user_drivers_list_with_updates():
     user_drivers = get_user_drivers_list()
-    return map(lambda driver: user_or_updated(driver), user_drivers)
+    return list(map(lambda driver: user_or_updated(driver), user_drivers))
 
 
 def copy_user_files(update: bool = True):
@@ -139,7 +139,7 @@ def validate_config(vault: bool):
             'ocvalidate returned a non-zero exit code. Please run ocvalidate manually for more information.')
     config_plist = parse_config_file(USER_OPENCORE_DIR)
     # check values for efi files
-    drivers_list = get_user_drivers_list().map(lambda path: path.name)
+    drivers_list = list(map(lambda path: path.name), get_user_drivers_list())
     for driver in drivers_list:
         if driver not in config_plist['UEFI']['Drivers']:
             raise Exception('missing driver ' +
@@ -291,12 +291,12 @@ def date_filename():
 def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool = False, vault: bool = True, backup: bool = False, write: bool = False, update: bool = True):
     print_diagnostics(version, release, sign, vault, backup, write)
     # validate config.plist
-    validate_config(vault)
     # TODO: do apecid
     check_keys()
     # bless_partition()
     # download dependencies
     download_dependencies(version, release)
+    validate_config(vault)
     # copy user files or updated files to updated dir
     copy_user_files(update)
     if sign:

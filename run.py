@@ -13,7 +13,7 @@ def run(commands: list[str]) -> int:
     commands = map(lambda x: str(x), commands)
     commands = list(commands)
     commands = ' '.join(commands)
-    commands = f"'{commands}'"
+    commands = f'"{commands}"'
     input = ['/bin/zsh', '-c', commands]
     input_str = ' '.join(input)
     echo(f'will run "{input_str}"')
@@ -24,4 +24,4 @@ def run(commands: list[str]) -> int:
 
 def multipass(command: str) -> int:
     mn = ENV["MULTIPASS_NAME"]
-    return run([f"multipass {mn} exec sh -c '{command}'"])
+    return run([f"multipass exec {mn} -- sh -c '{command}'"])

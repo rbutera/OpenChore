@@ -19,7 +19,7 @@ def get_config_path(dir: Path = USER_OPENCORE_DIR):
 
 def parse_config_file(dir: Path = USER_OPENCORE_DIR):
     config_plist = get_config_path(dir)
-    config_plist = config_plist.read_bytes()
+    config_plist = open(config_plist, 'rb')
     output = plistlib.load(config_plist, fmt=plistlib.FMT_XML)
     config_plist.close()
     return output

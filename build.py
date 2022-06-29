@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 from glob import glob
+import sign as signlib
 from pathlib import Path
 from webbrowser import get
 from config import *
@@ -74,12 +75,12 @@ def cleanup():
 
 
 def get_user_drivers_list():
-    return glob(USER_OPENCORE_DRIVERS_DIR / '*.efi')
+    return glob(f'{USER_OPENCORE_DRIVERS_DIR}/*.efi')
 
 
 def user_path_to_download_path(path: Path) -> Path:
     replaced = str(path).replace(str(USER_EFI_DIR),
-                                 str(Path(DOWNLOADS_DIR + '/X64/EFI')))
+                                 str(Path(f'{DOWNLOADS_DIR}/X64/EFI')))
     return Path(replaced)
 
 
@@ -88,13 +89,13 @@ def is_user_file_in_downloads(path: Path) -> bool:
     return download_path.exists()
 
 
-def user_or_updated(path: Path):
+def user_or_updated(path: Path) -> Path:
     if is_user_file_in_downloads(path):
-        name = path.name
+        name = Path(path).name
         click.echo(click.style('Will use updated ' + name, fg='yellow'))
         output = user_path_to_download_path(path)
     else:
-        output = path
+        output = Path(path)
     return output
 
 
@@ -104,7 +105,7 @@ def get_user_drivers_list_with_updates():
 
 
 def copy_user_files(update: bool = True):
-    os.system('cp -r ' + USER_EFI_DIR + '/* ' + UPDATED_DIR)
+    os.system('cp -r ' + str(USER_EFI_DIR) + '/* ' + str(UPDATED_DIR))
     if not update:
         click.echo('copied current version of user files to signed directory')
     else:
@@ -120,11 +121,10 @@ def copy_user_files(update: bool = True):
         for file in user_drivers:
             click.echo(
                 f'copying {file} to {UPDATED_OC_DRIVERS_DIR}/{file.name}')
-            os.system('cp ' + str(file) + ' ' +
-                      UPDATED_OC_DRIVERS_DIR + '/' + str(file).name)
+            os.system(f'cp {file} {UPDATED_OC_DRIVERS_DIR}/{file.name}')
         click.echo('Finished copying user files to updated directory')
-        os.system('mv ' + USER_EFI_DIR + ' ' + 'EFI_TEMP')
-        os.system('mv ' + UPDATED_DIR + ' ' + 'EFI')
+        os.system('mv ' + str(USER_EFI_DIR) + ' ' + 'EFI_TEMP')
+        os.system(f'mv {UPDATED_DIR} {USER_EFI_DIR}')
         os.system('rm -rfv EFI_TEMP')
         click.echo('Finished cleaning up EFI_TEMP')
 
@@ -140,11 +140,24 @@ def validate_config(vault: bool):
             'ocvalidate returned a non-zero exit code. Please run ocvalidate manually for more information.')
     config_plist = parse_config_file(USER_OPENCORE_DIR)
     # check values for efi files
-    drivers_list = list(map(lambda path: path.name), get_user_drivers_list())
+    drivers_list = list(map(lambda path: Path(
+        path).name, get_user_drivers_list()))
     for driver in drivers_list:
-        if driver not in config_plist['UEFI']['Drivers']:
-            raise Exception('missing driver ' +
-                            driver + ' in UEFI->Drivers')
+        if driver not in list(map(lambda d: d['Path'], config_plist['UEFI']['Drivers'])):
+            existing_drivers = config_plist['UEFI']['Drivers']
+            existing_drivers.append({
+                'Arguments': '',
+                'Comment': '',
+                'Enabled': True,
+                'Path': driver
+            })
+            click.echo(click.style(
+                f'will add {driver} to config', fg='yellow'))
+            config_plist['UEFI']['Drivers'] = existing_drivers
+            write_config_file(config_plist, USER_OPENCORE_DIR)
+        else:
+            click.echo(click.style(
+                f'found driver {driver} in UEFI->Drivers', fg='green'))
     # check config_plist values for vault
     if vault:
         click.echo('Checking Apple Secure Boot configuration')
@@ -176,8 +189,9 @@ def check_signed(files: list = []) -> bool:
 
 
 def make_vault(signed: bool = True):
-    utilities = DOWNLOADS_DIR / 'Utilities/CreateVault'
-    os.system('cp -Rv ' + utilities + ' ' + HACKINTOSH_ROOT + '/')
+    utilities = Path(DOWNLOADS_DIR / 'Utilities/CreateVault')
+    os.system(f'mkdir -pv {HACKINTOSH_ROOT}/Utilities')
+    os.system(f'cp -Rv {utilities} {HACKINTOSH_ROOT}/Utilities')
     if signed:
         os.system(f'mv {USER_EFI_DIR} {HACKINTOSH_ROOT}/EFI_TEMP')
         os.system(f'mv {SIGNED_DIR} {HACKINTOSH_ROOT}/EFI')
@@ -197,8 +211,8 @@ def make_vault(signed: bool = True):
 
 def check_vault(signed: bool = True):
     dir = SIGNED_DIR if signed else USER_EFI_DIR
-    files = list(map(lambda x: Path(dir) / 'OC' / x),
-                 ['vault.plist', 'vault.sig'])
+    files = list(map(lambda x: Path(dir) / 'OC' / x,
+                 ['vault.plist', 'vault.sig']))
     for file in files:
         if not file.exists():
             raise Exception('could not find ' + str(file))
@@ -303,13 +317,13 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
     copy_user_files(update)
     if sign:
         # sign opencore drivers for uefi secure boot
-        to_sign = glob(USER_EFI_DIR + 'OC/Drivers/*.efi')
-        sign.sign_all(to_sign, USER_EFI_DIR)
+        to_sign = glob(f'{USER_OPENCORE_DRIVERS_DIR}/*.efi')
+        signlib.sign_all(to_sign, USER_EFI_DIR)
 
     # create vault
-    make_vault()
+    make_vault(sign)
     # sign OpenCore EFI and BOOTx64.efi
-    sign.sign_opencore(USER_EFI_DIR)
+    signlib.sign_opencore(USER_EFI_DIR)
     # TODO: (optional) create vault again?
     # mount efi
     if write or backup:

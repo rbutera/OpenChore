@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 from glob import glob
+from pprint import pprint
 import sign as signlib
 from pathlib import Path
 from webbrowser import get
@@ -14,7 +15,7 @@ import click
 
 import apecid
 import environment
-from run import run
+from run import run, multipass
 
 ENV = environment.get_env()
 DEFAULT_VERSION = "0.8.1"
@@ -63,15 +64,14 @@ def print_diagnostics(version: str = DEFAULT_VERSION, release: str = "RELEASE", 
 
 
 def clean_dir(dir: str):
-    for file in glob(f'{dir}/*'):
-        os.remove(file)
-    os.rmdir(f'{dir}')
-    click.echo('removed ' + dir)
+    os.system(f'rm -rf {dir}')
+    click.echo(f'removed {dir}')
 
 
 def cleanup():
     for path in temp_directories:
         clean_dir(path)
+    click.echo(click.style('Cleaned up temp directories', fg='green'))
 
 
 def get_user_drivers_list():
@@ -86,7 +86,11 @@ def user_path_to_download_path(path: Path) -> Path:
 
 def is_user_file_in_downloads(path: Path) -> bool:
     download_path = user_path_to_download_path(path)
-    return download_path.exists()
+    result = download_path.exists()
+    msg = f'using {download_path}' if result else f'could not find a downloaded replacement for {path}'
+    fg = 'green' if result else 'yellow'
+    click.echo(click.style(msg, fg=fg))
+    return result
 
 
 def user_or_updated(path: Path) -> Path:
@@ -105,28 +109,37 @@ def get_user_drivers_list_with_updates():
 
 
 def copy_user_files(update: bool = True):
-    os.system('cp -r ' + str(USER_EFI_DIR) + '/* ' + str(UPDATED_DIR))
+    os.system(f'cp -R {USER_EFI_DIR} {UPDATED_DIR}')
     if not update:
         click.echo('copied current version of user files to signed directory')
     else:
         click.echo(
             'will update user files and copy to updated directory and then to signed directory')
-        UPDATED_OC_DRIVERS_DIR = UPDATED_DIR / 'OC/Drivers'
+        UPDATED_OC_DRIVERS_DIR = Path(f'{UPDATED_DIR}/EFI/OC/Drivers')
         for file in glob(f'{UPDATED_OC_DRIVERS_DIR}/*.efi'):
             os.remove(file)
             click.echo('Removed ' + str(file))
         click.echo(
             'Finished purging all OpenCore drivers. Now inserting existing or updated if available')
         user_drivers = get_user_drivers_list_with_updates()
+        click.echo('user driver list with updates incorporated is:')
+        pprint(user_drivers)
         for file in user_drivers:
             click.echo(
                 f'copying {file} to {UPDATED_OC_DRIVERS_DIR}/{file.name}')
-            os.system(f'cp {file} {UPDATED_OC_DRIVERS_DIR}/{file.name}')
+            os.system(f'cp -R {file} {UPDATED_OC_DRIVERS_DIR}/{file.name}')
         click.echo('Finished copying user files to updated directory')
-        os.system('mv ' + str(USER_EFI_DIR) + ' ' + 'EFI_TEMP')
-        os.system(f'mv {UPDATED_DIR} {USER_EFI_DIR}')
-        os.system('rm -rfv EFI_TEMP')
-        click.echo('Finished cleaning up EFI_TEMP')
+        click.echo('Updated files are now:')
+        # os.system(f'tree {UPDATED_DIR}')
+        EFI_TEMP = f'{HACKINTOSH_ROOT}/EFI_TEMP'
+        os.system(f'rm -rf {EFI_TEMP}')
+        os.system(f'cp -R {USER_EFI_DIR}/* {EFI_TEMP}')
+        os.system(f'rm -rf {USER_EFI_DIR}')
+        os.system(f'cp -R {UPDATED_DIR}/* {USER_EFI_DIR}')
+        os.system('rm -rf {EFI_TEMP}')
+        click.echo(
+            'Finished cleaning up EFI_TEMP. Opencore dir contents are now:')
+        os.system(f'ls {USER_OPENCORE_DIR}')
 
 
 def validate_config(vault: bool):
@@ -163,16 +176,24 @@ def validate_config(vault: bool):
         click.echo('Checking Apple Secure Boot configuration')
         if config_plist['Misc']['Security']['Vault'] != 'Secure':
             raise Exception('Misc->Security->Vault is not set to Secure')
+        else:
+            click.echo('Misc->Security->Vault is set to Secure')
         # check values for windows dual boot
         if config_plist['Booter']['Quirks']['DevirtualiseMmio'] != True:
             raise Exception(
                 'Booter->Quirks->DevirtualiseMmio is not set to True')
+        else:
+            click.echo('Booter->Quirks->DevirtualiseMmio is set to True')
         if config_plist['Booter']['Quirks']['ProtectUefiServices'] != True:
             raise Exception(
                 'Booter->Quirks->ProtectUefiServices is not set to True')
+        else:
+            click.echo('Booter->Quirks->ProtectUefiServices is set to True')
         if config_plist['Booter']['Quirks']['SyncRuntimePermissions'] != True:
             raise Exception(
                 'Booter->Quirks->SyncRuntimePermissions is not set to True')
+        else:
+            click.echo('Booter->Quirks->SyncRuntimePermissions is set to True')
 
 
 def check_signed(files: list = []) -> bool:
@@ -181,20 +202,23 @@ def check_signed(files: list = []) -> bool:
     if not len(files):
         raise Exception('check_signed was called with an empty list of files')
     for file in files:
-        code += run_multipass(
-            f'sbverify --list {SIGNED_DIR}/{file}')
+        code += multipass(
+            f'sbverify --list {file}')
         if not code == 0:
             raise Exception(f'{file} is not signed')
     return code == 0
 
 
 def make_vault(signed: bool = True):
+    click.echo(click.style('Making vault', bold=True))
     utilities = Path(DOWNLOADS_DIR / 'Utilities/CreateVault')
     os.system(f'mkdir -pv {HACKINTOSH_ROOT}/Utilities')
-    os.system(f'cp -Rv {utilities} {HACKINTOSH_ROOT}/Utilities')
+    os.system(f'cp -R {utilities} {HACKINTOSH_ROOT}/Utilities')
     if signed:
-        os.system(f'mv {USER_EFI_DIR} {HACKINTOSH_ROOT}/EFI_TEMP')
-        os.system(f'mv {SIGNED_DIR} {HACKINTOSH_ROOT}/EFI')
+        os.system(
+            f'rm -rf {HACKINTOSH_ROOT}/EFI_TEMP && mkdir -p {HACKINTOSH_ROOT}/EFI_TEMP')
+        os.system(f'cp -R {USER_EFI_DIR}/* {HACKINTOSH_ROOT}/EFI_TEMP')
+        os.system(f'cp -R {SIGNED_DIR}/* {USER_EFI_DIR}')
     utilities = Path(HACKINTOSH_ROOT / 'Utilities')
     if not utilities.exists():
         raise Exception('could not find Utilities directory')
@@ -252,9 +276,9 @@ def download_dependencies(version: str = DEFAULT_VERSION, release: str = "RELEAS
         click.echo('cleaning up ' + str(file))
         os.remove(file)
     download('https://github.com/acidanthera/OcBinaryData/raw/master/Drivers/HfsPlus.efi',
-             DOWNLOADED_DRIVERS_DIR)
+             USER_OPENCORE_DRIVERS_DIR)
     download('https://github.com/acidanthera/OcBinaryData/raw/master/Drivers/ext4_x64.efi',
-             DOWNLOADED_DRIVERS_DIR)
+             USER_OPENCORE_DRIVERS_DIR)
 
 
 def check_keys():
@@ -303,7 +327,16 @@ def date_filename():
 @click.option('--backup', default=False)
 @click.option('--write', default=False)
 @click.option('--update', default=True)
-def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool = False, vault: bool = True, backup: bool = False, write: bool = False, update: bool = True):
+@click.option('--reset', default=False)
+def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool = False, vault: bool = True, backup: bool = False, write: bool = False, update: bool = True, reset: bool = False):
+    click.echo(click.style(
+        f'Building OpenCore {version}', fg='green', bold=True))
+    if reset:
+        cwd = os.getcwd()
+        os.system(
+            f'cd {HACKINTOSH_ROOT} && git add . && git reset HEAD --hard && cd {cwd}')
+        click.echo(click.style(
+            'Finished resetting EFI folder', fg='green', bold=True))
     print_diagnostics(version, release, sign, vault, backup, write)
     create_directories()
     # validate config.plist
@@ -317,9 +350,12 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
     copy_user_files(update)
     if sign:
         # sign opencore drivers for uefi secure boot
-        to_sign = glob(f'{USER_OPENCORE_DRIVERS_DIR}/*.efi')
+        to_sign = glob(f'{USER_OPENCORE_DRIVERS_DIR}/*.efi') + \
+            glob(f'{USER_OPENCORE_DIR}/Tools/*.efi')
         signlib.sign_all(to_sign, USER_EFI_DIR)
-
+        signed_files = glob(f'{SIGNED_DIR}/OC/Drivers/*.efi')
+        check_signed(signed_files)
+    click.echo(click.style('Finished signing.', fg='green', bold=True))
     # create vault
     make_vault(sign)
     # sign OpenCore EFI and BOOTx64.efi
@@ -334,7 +370,7 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
         BACKUPS_DIR = os.getcwd() + '/backups'
         os.system(f'mkdir -p {BACKUPS_DIR}/{filename}')
         os.system(f'rm -rf {BACKUPS_DIR}/{filename}/*')
-        os.system(f'cp -Rv /Volumes/EFI/EFI/* {BACKUPS_DIR}/{filename}')
+        os.system(f'cp -R /Volumes/EFI/EFI/* {BACKUPS_DIR}/{filename}')
         run([
             '/usr/local/bin/7z a {BACKUPS_DIR}/{filename}/* {BACKUPS_DIR}/{filename}.7z'])
         click.echo('Backed up current efi to {BACKUPS_DIR}/{filename}.7z')
@@ -352,8 +388,8 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
             path_to_copy = SIGNED_DIR if sign else USER_EFI_DIR
             copy_to_efi.copy_to_efi(path_to_copy, '/Volumes/EFI')
             unmount_efi(BOOT_VOLUME_NAME)
-    click.echo(click.style('Done!', fg='green', bold=True, blink=True))
     cleanup()
+    click.echo(click.style('Done!', fg='green', bold=True, blink=True))
 
 
 if __name__ == '__main__':

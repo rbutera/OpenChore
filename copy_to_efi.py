@@ -60,7 +60,8 @@ def copy_to_efi(input_dir: Path = USER_EFI_DIR, output_volume: str = "/Volumes/E
     clean_dest(dest_path)
     dest_path = dest_path / "EFI"
     log.debug(f"Cleaned. Time to copy to {dest_path}...")
-    code = os.system(f"rsync -rvz --progress {src_path}/* {dest_path}/")
+    code = os.system(
+        f"rsync -rvz --progress --exclude='*.7z' {src_path}/* {dest_path}/")
     log.debug(f"Exiting with code {code}")
     if code != 0:
         raise Exception(f"copy command returned non-zero code: {code}")

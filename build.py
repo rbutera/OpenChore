@@ -380,9 +380,9 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
         os.system(f'mkdir -p {BACKUP_DESTINATION}')
         os.system(f'rm -rf {BACKUP_DESTINATION}/*')
         os.system(f'cp -R /Volumes/EFI {BACKUP_DESTINATION}')
+        click.echo('Backed up current efi to {BACKUP_DESTINATION}')
         run([
-            f'/usr/local/bin/7z a {BACKUP_DESTINATION} {BACKUP_DESTINATION}.7z'])
-        click.echo('Backed up current efi to {BACKUPS_DIR}/{filename}.7z')
+            f'/usr/local/bin/7z a {BACKUP_DESTINATION}.7z {BACKUP_DESTINATION}'])
         unmount_efi(BOOT_VOLUME_NAME)
         if backup:
             click.echo('Cleaning up backup volume')

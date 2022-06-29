@@ -20,13 +20,14 @@ def build_env():
     ENV['USER_EFI_DIR'] = ENV["HACKINTOSH_ROOT"] + "/EFI"
     ENV['USER_OPENCORE_DIR'] = ENV["USER_EFI_DIR"] + "/OC"
     ENV['USER_OPENCORE_DRIVERS_DIR'] = ENV["USER_OPENCORE_DIR"] + "/Drivers"
+    ENV['PATH'] = os.getenv('PATH')
 
     return ENV
 
 
 def get_env():
     if len(ENV) == 0:
-        print('ENV is empty, calling build_env()')
+        # print('ENV is empty, calling build_env()')
         return build_env()
     return ENV
 

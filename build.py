@@ -328,7 +328,8 @@ def date_filename():
 @click.option('--write', default=False)
 @click.option('--update', default=True)
 @click.option('--reset', default=False)
-def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool = False, vault: bool = True, backup: bool = False, write: bool = False, update: bool = True, reset: bool = False):
+@click.option('--bless', default=False)
+def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool = False, vault: bool = True, backup: bool = False, write: bool = False, update: bool = True, reset: bool = False, bless: bool = False):
     click.echo(click.style(
         f'Building OpenCore {version}', fg='green', bold=True))
     if reset:
@@ -345,6 +346,8 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
     # bless_partition()
     # download dependencies
     download_dependencies(version, release)
+    if bless:
+        apecid.insert_apecid()
     validate_config(vault)
     # copy user files or updated files to updated dir
     copy_user_files(update)
@@ -357,12 +360,18 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
         check_signed(signed_files)
     click.echo(click.style('Finished signing.', fg='green', bold=True))
     # create vault
-    make_vault(sign)
+    if vault:
+        make_vault(sign)
     # sign OpenCore EFI and BOOTx64.efi
     signlib.sign_opencore(USER_EFI_DIR)
     # TODO: (optional) create vault again?
     # mount efi
     if write or backup:
+        print('\n\n\n')
+        click.echo(click.style(
+            'Build complete! Attempting to write to EFI partition.', bold=True))
+        click.echo(click.style(
+            'Please enter the password for the currently logged in user to continue.', fg='green', bold=True))
         mount_efi(BOOT_VOLUME_NAME)
         # backup current efi to file
         filename = Path(os.getcwd() + '/backups/' + date_filename())
@@ -372,7 +381,7 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
         os.system(f'rm -rf {BACKUPS_DIR}/{filename}/*')
         os.system(f'cp -R /Volumes/EFI/EFI/* {BACKUPS_DIR}/{filename}')
         run([
-            '/usr/local/bin/7z a {BACKUPS_DIR}/{filename}/* {BACKUPS_DIR}/{filename}.7z'])
+            f'/usr/local/bin/7z a {BACKUPS_DIR}/{filename}/* {BACKUPS_DIR}/{filename}.7z'])
         click.echo('Backed up current efi to {BACKUPS_DIR}/{filename}.7z')
         unmount_efi(BOOT_VOLUME_NAME)
         if backup:

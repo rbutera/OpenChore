@@ -30,6 +30,11 @@ USER_OPENCORE_DRIVERS_DIR = Path(ENV['USER_OPENCORE_DRIVERS_DIR'])
 SIGNED_DIR = Path(ENV['SIGNED_DIR'])
 BOOT_VOLUME_NAME = ENV['BOOT_VOLUME_NAME']
 BACKUP_VOLUME_NAME = ENV['BACKUP_VOLUME_NAME']
+BACKUPS_DIR = Path(os.getcwd() + '/backups')
+BACKUP_DATE = datetime.now().strftime('%Y%m%dT%H%M%S')
+BACKUP_DIR = Path(ENV['BACKUP_DIR'])
+BACKUP_DESTINATION = Path(f'{BACKUP_DIR}/{BACKUP_DATE}')
+
 
 temp_directories = [DOWNLOADS_DIR, SIGNED_DIR, UPDATED_DIR]
 
@@ -314,11 +319,6 @@ def unmount_efi(name):
     return status
 
 
-def date_filename():
-    now = datetime.now()
-    return now.strftime('%Y%m%dT%H%M%S')
-
-
 @click.command()
 @click.option('--version', default=DEFAULT_VERSION)
 @click.option('--release', default="RELEASE")
@@ -374,14 +374,14 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
             'Please enter the password for the currently logged in user to continue.', fg='green', bold=True))
         mount_efi(BOOT_VOLUME_NAME)
         # backup current efi to file
-        filename = Path(os.getcwd() + '/backups/' + date_filename())
-        click.echo('Backing up current EFI to ' + str(filename))
-        BACKUPS_DIR = os.getcwd() + '/backups'
-        os.system(f'mkdir -p {BACKUPS_DIR}/{filename}')
-        os.system(f'rm -rf {BACKUPS_DIR}/{filename}/*')
-        os.system(f'cp -R /Volumes/EFI/EFI/* {BACKUPS_DIR}/{filename}')
+
+        click.echo('Backing up current EFI to ' + str(BACKUP_DESTINATION))
+
+        os.system(f'mkdir -p {BACKUP_DESTINATION}')
+        os.system(f'rm -rf {BACKUP_DESTINATION}/*')
+        os.system(f'cp -R /Volumes/EFI {BACKUP_DESTINATION}')
         run([
-            f'/usr/local/bin/7z a {BACKUPS_DIR}/{filename}/* {BACKUPS_DIR}/{filename}.7z'])
+            f'/usr/local/bin/7z a {BACKUP_DESTINATION} {BACKUP_DESTINATION}.7z'])
         click.echo('Backed up current efi to {BACKUPS_DIR}/{filename}.7z')
         unmount_efi(BOOT_VOLUME_NAME)
         if backup:
@@ -397,6 +397,7 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
             path_to_copy = SIGNED_DIR if sign else USER_EFI_DIR
             copy_to_efi.copy_to_efi(path_to_copy, '/Volumes/EFI')
             unmount_efi(BOOT_VOLUME_NAME)
+        os.system(f'rm -rf {BACKUP_DESTINATION}/*')
     cleanup()
     click.echo(click.style('Done!', fg='green', bold=True, blink=True))
 

@@ -21,6 +21,8 @@ def build_env():
     ENV['USER_OPENCORE_DIR'] = ENV["USER_EFI_DIR"] + "/OC"
     ENV['USER_OPENCORE_DRIVERS_DIR'] = ENV["USER_OPENCORE_DIR"] + "/Drivers"
     ENV['PATH'] = os.getenv('PATH')
+    if 'BACKUP_DIR' not in ENV.keys():
+        ENV['BACKUP_DIR'] = os.cwd() + "/backup"
 
     return ENV
 

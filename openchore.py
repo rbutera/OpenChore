@@ -154,7 +154,7 @@ def dprint(msg: str):
     border = '---------------------------'
     click.echo('\n')
     click.echo(click.style(border + msg + border,
-               bg="blue", fg="white", bold=True))
+               bg="black", fg="white", bold=True))
     click.echo('\n')
 
 

@@ -376,9 +376,9 @@ def write_to_efi(src, dest):
 @click.option(
     "-S",
     "--backup-strategy",
-    type=click.choice(['local', 'volume', 'both'], case_sensitive=False),
+    type=click.choice(['local', 'volume'], case_sensitive=False),
     default="local",
-    help="Backup strategy to use. Local backs up to a local 7z archive. Volume backs up to a specified volume name"
+    help="Backup strategy to use. Local backs up to a local 7z archive. Volume also backs up to a specified volume name"
 )
 def openchore(
     version: str = VERSION,
@@ -392,6 +392,7 @@ def openchore(
     generate_apecid: bool = False,
     build: bool = True,
     download: bool = True,
+    backup_strategy: str = "local"
 ):
     release = "DEBUG" if debug else "RELEASE"
     click.echo(click.style('Welcome to OpenChore!',
@@ -407,7 +408,7 @@ def openchore(
             "Finished resetting EFI folder", fg="green", bold=True))
     print_diagnostics(version, release, sign, vault, backup, write)
     create_directories()
-    if backup or build:
+    if backup:
         print("\n\n\n")
         click.echo(
             click.style(
@@ -418,18 +419,15 @@ def openchore(
         )
         mount_efi(BOOT_VOLUME_NAME)
         # backup current efi to file
-
         click.echo("Backing up current EFI to " + str(BACKUP_DESTINATION))
-
         os.system(f"mkdir -p {BACKUP_DESTINATION}")
-
         os.system(f"rm -rf {BACKUP_DIR}/*")
         os.system(f"rsync -rvz --progress /Volumes/EFI/ {BACKUP_DESTINATION}")
         click.echo("Backed up current efi to {BACKUP_DESTINATION}")
         run([
             f"/usr/local/bin/7z a {BACKUP_DESTINATION}.7z {BACKUP_DESTINATION}"])
         unmount_efi(BOOT_VOLUME_NAME)
-        if backup:
+        if backup_strategy.to_lower() == 'local':
             click.echo("Cleaning up backup volume")
             mount_efi(BACKUP_VOLUME_NAME)
             os.system("rm -rf /Volumes/EFI/*")

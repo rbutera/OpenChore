@@ -13,11 +13,11 @@ def build_env():
     for key, value in values:
         ENV[key] = value
 
-    ENV['KEYS_DIR'] = ENV["HACKINTOSH_ROOT"] + "/keys"
-    ENV['SIGNED_DIR'] = ENV["HACKINTOSH_ROOT"] + "/signed"
-    ENV['DOWNLOADS_DIR'] = ENV["HACKINTOSH_ROOT"] + "/download"
+    ENV['KEYS_DIR'] = ENV["LOCAL_EFI_REPOSITORY"] + "/keys"
+    ENV['SIGNED_DIR'] = ENV["LOCAL_EFI_REPOSITORY"] + "/signed"
+    ENV['DOWNLOADS_DIR'] = ENV["LOCAL_EFI_REPOSITORY"] + "/download"
     ENV['DOWNLOADED_EFI_DIR'] = ENV["DOWNLOADS_DIR"] + "/X64/EFI"
-    ENV['USER_EFI_DIR'] = ENV["HACKINTOSH_ROOT"] + "/EFI"
+    ENV['USER_EFI_DIR'] = ENV["LOCAL_EFI_REPOSITORY"] + "/EFI"
     ENV['USER_OPENCORE_DIR'] = ENV["USER_EFI_DIR"] + "/OC"
     ENV['USER_OPENCORE_DRIVERS_DIR'] = ENV["USER_OPENCORE_DIR"] + "/Drivers"
     ENV['PATH'] = os.getenv('PATH')

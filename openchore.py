@@ -477,7 +477,7 @@ def openchore(
 
     if commit:
         click.echo(click.style('Committing changes to local efi repository',
-                   bg='orange', fg='white', bold=True))
+                   bg='red', fg='white', bold=True))
         cwd = os.getcwd()
         os.system(f'cd {LOCAL_EFI_REPOSITORY}')
         os.system(f'git add .')

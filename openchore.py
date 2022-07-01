@@ -10,7 +10,10 @@ from webbrowser import get
 import click
 import requests
 
-from lib import apecid, copy_to_efi, environment, sign as signlib, config, run as runlib
+from lib import apecid, config, copy_to_efi, environment
+from lib import run as runlib
+from lib import sign as signlib
+
 multipass = runlib.multipass
 run = runlib.run
 
@@ -88,7 +91,8 @@ def clean_dir(dir: str):
 
 
 def cleanup():
-    for path in temp_directories:
+    temp_paths_to_clean = [x for x in temp_directories if x != SIGNED_DIR]
+    for path in temp_paths_to_clean:
         clean_dir(path)
     os.system(f"rm -rf {BACKUP_DIR}/")
     click.echo(click.style("Cleaned up temp directories", fg="green"))
@@ -445,6 +449,7 @@ def openchore(
     # updates
     if update:
         update_local_efi_repository()
+        validate_config(vault)
     if build and sign:
         # sign opencore drivers for uefi secure boot
         check_keys()

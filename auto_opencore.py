@@ -329,10 +329,10 @@ def check_keys():
     pass
 
 
-def bless_partition():
-    click.echo("blessing partition")
+def generate_apecid_partition():
+    click.echo("generate_apeciding partition")
     return run(
-        ['bless --folder "/System/Library/CoreServices" --bootefi --personalize']
+        ['generate_apecid --folder "/System/Library/CoreServices" --bootefi --personalize']
     )
 
 
@@ -363,17 +363,17 @@ def write_to_efi(src, dest):
 
 
 @click.command()
-@click.option("--version", default=VERSION, help=f'OpenCore version to use \(defaults to {VERSION}\)')
-@click.option("--debug", default=False, help=f'Use DEBUG build of OpenCore')
-@click.option("--sign", default=False, help=f'Sign OpenCore')
-@click.option("--vault", default=True, help=f'Create Apple Vault')
-@click.option("--backup", default=False, help=f'Backup to the volume specified in environment variables')
-@click.option("--write", default=False, help=f'Write built files to EFI partition')
-@click.option("--update", default=True, help='Update local EFI repository using the downloaded version of OpenCore')
-@click.option("--reset", default=False, help=f'Reset the local EFI repository using git before starting')
-@click.option("--bless", default=False, help=f'Generate and insert apecid if necessary')
-@click.option("--build/--no-build", default=True, help='Rebuild new EFI directory')
-@click.option("--download/--skip-download", default=True, help='Download the specified version of OpenCore')
+@click.option("-v", "--version", default=VERSION, help=f'OpenCore version to use \(defaults to {VERSION}\)')
+@click.option("-d", "--debug", default=False, help=f'Use DEBUG build of OpenCore')
+@click.option("-s", "--sign", default=False, help=f'Sign OpenCore')
+@click.option("-v", "--vault", default=True, help=f'Create Apple Vault')
+@click.option("-b", "--backup", default=False, help=f'Backup to the volume specified in environment variables')
+@click.option("-w", "--write", default=False, help=f'Write built files to EFI partition')
+@click.option("-u", "--update", default=True, help='Update local EFI repository using the downloaded version of OpenCore')
+@click.option("-r", "--reset", default=False, help=f'Reset the local EFI repository using git before starting')
+@click.option("-a", "--generate-apecid", default=False, help=f'Generate and insert apecid if necessary')
+@click.option("-b", "--build/--no-build", default=True, help='Rebuild new EFI directory')
+@click.option("-d", "--download/--skip-download", default=True, help='Download the specified version of OpenCore')
 def auto_opencore(
     version: str = VERSION,
     debug: bool = False,
@@ -383,7 +383,7 @@ def auto_opencore(
     write: bool = False,
     update: bool = True,
     reset: bool = False,
-    bless: bool = False,
+    generate_apecid: bool = False,
     build: bool = True,
     download: bool = True,
 ):
@@ -437,7 +437,7 @@ def auto_opencore(
             click.echo("Copied to backup volume")
             unmount_efi(BACKUP_VOLUME_NAME)
     # TODO: do apecid
-    # bless_partition()
+    # generate_apecid_partition()
     # download dependencies
     if download:
         download_dependencies(version, release)
@@ -447,7 +447,7 @@ def auto_opencore(
         )
         return 0
 
-    if bless:
+    if generate_apecid:
         apecid.insert_apecid()
     # validate config.plist
     validate_config(vault)

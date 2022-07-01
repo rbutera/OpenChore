@@ -15,8 +15,9 @@ cwd = Path.cwd()
 log.debug(f"Current working directory is {cwd}")
 
 
-def clean_dest(volume_path):
-    path = volume_path / "EFI"
+def clean(target):
+    os.system(f'rm -rf {target}/*')
+    path = target / "EFI"
     if not Path(path).exists():
         click.echo(f"creating {path}")
         Path.mkdir(path)
@@ -28,14 +29,16 @@ def clean_dest(volume_path):
 
 
 def check_exists(input):
+    msg = f"{input} is missing"
     if not Path(input).exists():
-        raise Exception(f"{input} is missing")
+        raise Exception(msg)
     log.debug(f"Detected {input} exists")
 
 
-def check_src(input_dir):
-    oc = input_dir / "OC"
-    boot = input_dir / "BOOT"
+def validate_input(path):
+    path = Path(path / "EFI")
+    oc = path / "OC"
+    boot = path / "BOOT"
     x64 = boot / "BOOTx64.efi"
     opencore_efi = oc / "OpenCore.efi"
     config_plist = oc / "config.plist"
@@ -44,24 +47,21 @@ def check_src(input_dir):
         check_exists(required)
 
 
-@click.command()
-@click.option("--input_volume", default=USER_EFI_DIR, help=f"e.g. {USER_EFI_DIR}")
-@click.option("--output_volume", default="/Volumes/EFI", help="e.g. /Volumes/EFI")
-def copy_to_efi(input_dir: Path = USER_EFI_DIR, output_volume: str = "/Volumes/EFI") -> int:
-    src_path = Path(input_dir)
-    click.echo(f"{message}\nUsing source path {src_path}")
-    if not Path(src_path).exists():
-        raise Exception(f"source path {src_path} is missing")
-    check_src(src_path)
-    dest_path = Path(output_volume)
-    if not Path(dest_path).exists():
-        raise Exception(f'Missing destination volume "{output_volume}"')
+def copy_to_efi(input: Path = USER_EFI_DIR, output: str = "/Volumes/EFI") -> int:
+    input = Path(input)
+    click.echo(f"copy_to_efi: Using source path {input}")
+    if not Path(input).exists():
+        raise Exception(f"source path {input} is missing")
+    validate_input(input)
+    output = Path(output)
+    if not Path(output).exists():
+        raise Exception(f'Missing destination volume "{output}"')
 
-    clean_dest(dest_path)
-    dest_path = dest_path / "EFI"
-    log.debug(f"Cleaned. Time to copy to {dest_path}...")
+    clean(output)
+    output = output / "EFI"
+    log.debug(f"Cleaned. Time to copy to {output}...")
     code = os.system(
-        f"rsync -rvz --progress --exclude='*.7z' {src_path}/* {dest_path}/")
+        f"rsync -rvz --progress --exclude='*.7z' {input}/* {output}/")
     log.debug(f"Exiting with code {code}")
     if code != 0:
         raise Exception(f"copy command returned non-zero code: {code}")
@@ -69,5 +69,12 @@ def copy_to_efi(input_dir: Path = USER_EFI_DIR, output_volume: str = "/Volumes/E
     return code
 
 
+@click.command()
+@click.option("--input_volume", default=USER_EFI_DIR, help=f"e.g. {USER_EFI_DIR}")
+@click.option("--output_volume", default="/Volumes/EFI", help="e.g. /Volumes/EFI")
+def main(input_volume, output_volume):
+    return copy_to_efi(input_volume, output_volume)
+
+
 if __name__ == "__main__":
-    copy_to_efi()
+    main()

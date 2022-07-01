@@ -40,6 +40,7 @@ temp_directories = [DOWNLOADS_DIR, SIGNED_DIR, UPDATED_DIR]
 
 
 def create_directories():
+    cleanup()
     for dir in temp_directories:
         os.system('rm -rf ' + str(dir))
         click.echo('creating ' + str(dir))
@@ -76,6 +77,7 @@ def clean_dir(dir: str):
 def cleanup():
     for path in temp_directories:
         clean_dir(path)
+    os.system(f'rm -rf {BACKUP_DIR}/')
     click.echo(click.style('Cleaned up temp directories', fg='green'))
 
 
@@ -319,6 +321,10 @@ def unmount_efi(name):
     return status
 
 
+def write_to_efi(src, dest):
+    return copy_to_efi.copy_to_efi(src, dest)
+
+
 @click.command()
 @click.option('--version', default=DEFAULT_VERSION)
 @click.option('--release', default="RELEASE")
@@ -339,6 +345,34 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
         click.echo(click.style(
             'Finished resetting EFI folder', fg='green', bold=True))
     print_diagnostics(version, release, sign, vault, backup, write)
+    if backup:
+        print('\n\n\n')
+        click.echo(click.style(
+            'Build complete! Attempting to write to EFI partition.', bold=True))
+        click.echo(click.style(
+            'Please enter the password for the currently logged in user to continue.', fg='green', bold=True))
+        mount_efi(BOOT_VOLUME_NAME)
+        # backup current efi to file
+
+        click.echo('Backing up current EFI to ' + str(BACKUP_DESTINATION))
+
+        os.system(f'mkdir -p {BACKUP_DESTINATION}')
+
+        os.system(f'rm -rf {BACKUP_DIR}/*')
+        os.system(
+            f'rsync -rvz --progress /Volumes/EFI/ {BACKUP_DESTINATION}')
+        click.echo('Backed up current efi to {BACKUP_DESTINATION}')
+        run([
+            f'/usr/local/bin/7z a {BACKUP_DESTINATION}.7z {BACKUP_DESTINATION}'])
+        unmount_efi(BOOT_VOLUME_NAME)
+        if backup:
+            click.echo('Cleaning up backup volume')
+            mount_efi(BACKUP_VOLUME_NAME)
+            os.system('rm -rf /Volumes/EFI/*')
+            os.system('mkdir -p /Volumes/EFI/EFI')
+            write_to_efi(str(BACKUP_DESTINATION), '/Volumes/EFI')
+            click.echo('Copied to backup volume')
+            unmount_efi(BACKUP_VOLUME_NAME)
     create_directories()
     # validate config.plist
     # TODO: do apecid
@@ -366,38 +400,11 @@ def build(version: str = DEFAULT_VERSION, release: str = "RELEASE", sign: bool =
     signlib.sign_opencore(USER_EFI_DIR)
     # TODO: (optional) create vault again?
     # mount efi
-    if write or backup:
-        print('\n\n\n')
-        click.echo(click.style(
-            'Build complete! Attempting to write to EFI partition.', bold=True))
-        click.echo(click.style(
-            'Please enter the password for the currently logged in user to continue.', fg='green', bold=True))
+    if write:
         mount_efi(BOOT_VOLUME_NAME)
-        # backup current efi to file
-
-        click.echo('Backing up current EFI to ' + str(BACKUP_DESTINATION))
-
-        os.system(f'mkdir -p {BACKUP_DESTINATION}')
-        os.system(f'rm -rf {BACKUP_DESTINATION}/*')
-        os.system(f'cp -R /Volumes/EFI {BACKUP_DESTINATION}')
-        click.echo('Backed up current efi to {BACKUP_DESTINATION}')
-        run([
-            f'/usr/local/bin/7z a {BACKUP_DESTINATION}.7z {BACKUP_DESTINATION}'])
+        path_to_copy = SIGNED_DIR if sign else USER_EFI_DIR
+        write_to_efi(f'{path_to_copy}', '/Volumes/EFI')
         unmount_efi(BOOT_VOLUME_NAME)
-        if backup:
-            click.echo('Cleaning up backup volume')
-            mount_efi(BACKUP_VOLUME_NAME)
-            os.system('rm -rf /Volumes/EFI/*')
-            os.system('mkdir -p /Volumes/EFI/EFI')
-            copy_to_efi.copy_to_efi('{BACKUPS_DIR}/{filename}', '/Volumes/EFI')
-            click.echo('Copied to backup volume')
-            unmount_efi(BACKUP_VOLUME_NAME)
-        if write:
-            mount_efi(BOOT_VOLUME_NAME)
-            path_to_copy = SIGNED_DIR if sign else USER_EFI_DIR
-            copy_to_efi.copy_to_efi(path_to_copy, '/Volumes/EFI')
-            unmount_efi(BOOT_VOLUME_NAME)
-        os.system(f'rm -rf {BACKUP_DESTINATION}/*')
     cleanup()
     click.echo(click.style('Done!', fg='green', bold=True, blink=True))
 

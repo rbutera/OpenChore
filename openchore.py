@@ -320,7 +320,7 @@ def download(url: str, dest_dir: str = ENV["DOWNLOADS_DIR"]):
         raise Exception("failed to download " + url)
 
 
-def download_dependencies(version: str = VERSION, release: str = "RELEASE"):
+def download_dependencies(version: str = VERSION, release: str = "RELEASE", binaries: bool = True):
     DOWNLOADS_DIR = Path(ENV["DOWNLOADS_DIR"])
     download(
         f"https://github.com/acidanthera/OpenCorePkg/releases/download/{version}/OpenCore-{version}-{release}.zip",
@@ -343,14 +343,15 @@ def download_dependencies(version: str = VERSION, release: str = "RELEASE"):
     for file in glob(f"{DOWNLOADS_DIR}/*.zip"):
         click.echo("cleaning up " + str(file))
         os.remove(file)
-    download(
-        "https://github.com/acidanthera/OcBinaryData/raw/master/Drivers/HfsPlus.efi",
-        str(USER_OPENCORE_DRIVERS_DIR),
-    )
-    download(
-        "https://github.com/acidanthera/OcBinaryData/raw/master/Drivers/ext4_x64.efi",
-        str(USER_OPENCORE_DRIVERS_DIR),
-    )
+    if binaries:
+        download(
+            "https://github.com/acidanthera/OcBinaryData/raw/master/Drivers/HfsPlus.efi",
+            str(USER_OPENCORE_DRIVERS_DIR),
+        )
+        download(
+            "https://github.com/acidanthera/OcBinaryData/raw/master/Drivers/ext4_x64.efi",
+            str(USER_OPENCORE_DRIVERS_DIR),
+        )
 
 
 def check_keys():
@@ -415,6 +416,7 @@ def write_to_efi(src, dest):
     help="Backup strategy to use. Local backs up to a local 7z archive. Volume also backs up to a specified volume name"
 )
 @click.option("-C", "--commit", default=False, is_flag=True, help="Commit any changes to local EFI repository and push")
+@click.option("--vault-only", default=False, is_flag=True, help="Commit any changes to local EFI repository and push")
 def openchore(
     version: str = VERSION,
     debug: bool = False,
@@ -428,7 +430,8 @@ def openchore(
     build: bool = True,
     download: bool = True,
     backup_strategy: str = "local",
-    commit: bool = False
+    commit: bool = False,
+    vault_only: bool = False
 ):
     release = "DEBUG" if debug else "RELEASE"
     click.echo(click.style('Welcome to OpenChore!',
@@ -476,7 +479,7 @@ def openchore(
     # download dependencies
     if download:
         download_dependencies(version, release)
-    if not build:
+    if not build and not vault_only:
         click.echo(
             click.style("Exiting (launched with '--no-build')")
         )
@@ -487,10 +490,10 @@ def openchore(
     # validate config.plist
     validate_config(vault)
     # updates
-    if update:
+    if update and not vault_only:
         update_local_efi_repository()
         validate_config(vault)
-    if build and sign:
+    if build and sign and not vault_only:
         # sign opencore drivers for uefi secure boot
         check_keys()
         to_sign = glob(f"{USER_OPENCORE_DRIVERS_DIR}/*.efi") + glob(
@@ -501,7 +504,7 @@ def openchore(
         check_signed(signed_files)
         click.echo(click.style("Finished signing.", fg="green", bold=True))
     # create vault
-    if vault:
+    if vault or vault_only:
         make_vault(sign)
 
     # sign OpenCore EFI and BOOTx64.efi

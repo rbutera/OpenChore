@@ -380,6 +380,7 @@ def write_to_efi(src, dest):
     default="local",
     help="Backup strategy to use. Local backs up to a local 7z archive. Volume also backs up to a specified volume name"
 )
+@click.option("-C", "--commit", default=False, is_flag=True, help="Commit any changes to local EFI repository and push")
 def openchore(
     version: str = VERSION,
     debug: bool = False,
@@ -392,7 +393,8 @@ def openchore(
     generate_apecid: bool = False,
     build: bool = True,
     download: bool = True,
-    backup_strategy: str = "local"
+    backup_strategy: str = "local",
+    commit: bool = False
 ):
     release = "DEBUG" if debug else "RELEASE"
     click.echo(click.style('Welcome to OpenChore!',
@@ -473,6 +475,15 @@ def openchore(
         signlib.sign_opencore(USER_EFI_DIR)
         # TODO: (optional) create vault again?
 
+    if commit:
+        click.echo(click.style('Committing changes to local efi repository',
+                   bg='orange', fg='white', bold=True))
+        cwd = os.getcwd()
+        os.system(f'cd {LOCAL_EFI_REPOSITORY}')
+        os.system(f'git add .')
+        os.system(f'git commit -m "built OpenCore {version}"')
+        os.system(f'git push')
+        os.system(f'cd {cwd}')
     # mount efi
     if write:
         mount_efi(BOOT_VOLUME_NAME)

@@ -98,7 +98,7 @@ def clean_dir(dir: str):
     for file in to_remove:
         path = Path(file)
         click.echo(f'removing {file}')
-        path.remove()
+        path.unlink()
     os.system(f"rm -rf {dir}")
     click.echo(f"removed {dir}")
 

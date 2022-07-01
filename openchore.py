@@ -17,7 +17,7 @@ run = runlib.run
 ENV = environment.get_env()
 VERSION = "0.8.1"
 
-HACKINTOSH_ROOT = Path(ENV["HACKINTOSH_ROOT"])
+LOCAL_EFI_REPOSITORY = Path(ENV["LOCAL_EFI_REPOSITORY"])
 UPDATED_DIR = Path(ENV["UPDATED_DIR"])
 DOWNLOADS_DIR = Path(ENV["DOWNLOADS_DIR"])
 USER_EFI_DIR = Path(ENV["USER_EFI_DIR"])
@@ -58,7 +58,7 @@ def print_diagnostics(
     click.echo(click.style("Diagnostics:", bold=True))
     click.echo("Boot volume name is " + BOOT_VOLUME_NAME)
     click.echo("Backup volume name is " + BACKUP_VOLUME_NAME)
-    click.echo(f"Hackintosh root is {str(HACKINTOSH_ROOT)}")
+    click.echo(f"Hackintosh root is {str(LOCAL_EFI_REPOSITORY)}")
     click.echo(click.style(f"OpenCore version: {version}", fg="green"))
     click.echo(click.style(f"release: {release}", fg="green"))
     sign_msg = (
@@ -154,7 +154,7 @@ def update_local_efi_repository():
     click.echo("Finished copying user files to updated directory")
     click.echo("Updated files are now:")
     # os.system(f'tree {UPDATED_DIR}')
-    EFI_TEMP = f"{HACKINTOSH_ROOT}/EFI_TEMP"
+    EFI_TEMP = f"{LOCAL_EFI_REPOSITORY}/EFI_TEMP"
     os.system(f"rm -rf {EFI_TEMP}")
     os.system(f"cp -R {USER_EFI_DIR}/* {EFI_TEMP}")
     os.system(f"rm -rf {USER_EFI_DIR}")
@@ -235,22 +235,22 @@ def check_signed(files: list = []) -> bool:
 def make_vault(signed: bool = True):
     click.echo(click.style("Making vault", bold=True))
     utilities = Path(DOWNLOADS_DIR / "Utilities/CreateVault")
-    os.system(f"mkdir -pv {HACKINTOSH_ROOT}/Utilities")
-    os.system(f"cp -R {utilities} {HACKINTOSH_ROOT}/Utilities")
+    os.system(f"mkdir -pv {LOCAL_EFI_REPOSITORY}/Utilities")
+    os.system(f"cp -R {utilities} {LOCAL_EFI_REPOSITORY}/Utilities")
     if signed:
         os.system(
-            f"rm -rf {HACKINTOSH_ROOT}/EFI_TEMP && mkdir -p {HACKINTOSH_ROOT}/EFI_TEMP"
+            f"rm -rf {LOCAL_EFI_REPOSITORY}/EFI_TEMP && mkdir -p {LOCAL_EFI_REPOSITORY}/EFI_TEMP"
         )
-        os.system(f"cp -R {USER_EFI_DIR}/* {HACKINTOSH_ROOT}/EFI_TEMP")
+        os.system(f"cp -R {USER_EFI_DIR}/* {LOCAL_EFI_REPOSITORY}/EFI_TEMP")
         os.system(f"cp -R {SIGNED_DIR}/* {USER_EFI_DIR}")
-    utilities = Path(HACKINTOSH_ROOT / "Utilities")
+    utilities = Path(LOCAL_EFI_REPOSITORY / "Utilities")
     if not utilities.exists():
         raise Exception("could not find Utilities directory")
     path = utilities / "CreateVault" / "sign.command"
     output = run([f'{path}'])
     if signed:
         os.system(f"mv {USER_EFI_DIR} {SIGNED_DIR}")
-        os.system(f"mv {HACKINTOSH_ROOT}/EFI_TEMP {USER_EFI_DIR}")
+        os.system(f"mv {LOCAL_EFI_REPOSITORY}/EFI_TEMP {USER_EFI_DIR}")
     os.system(f"rm -rf {utilities}")
     if output != 0:
         raise Exception("CreateVault returned a non-zero exit code")
@@ -391,7 +391,7 @@ def openchore(
     if reset:
         cwd = os.getcwd()
         os.system(
-            f"cd {HACKINTOSH_ROOT} && git add . && git reset HEAD --hard && cd {cwd}"
+            f"cd {LOCAL_EFI_REPOSITORY} && git add . && git reset HEAD --hard && cd {cwd}"
         )
         click.echo(click.style(
             "Finished resetting EFI folder", fg="green", bold=True))

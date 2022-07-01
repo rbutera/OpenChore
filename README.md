@@ -6,6 +6,7 @@ OpenChore is a command-line tool can:
 
 - **downloadg** a specific version of OpenCore
 - **update** the local OpenCore (and efi drivers) with the downloaded versions
+- **backup** your current EFI boot partition to a different volume, e.g. a USB drive
 - **validate** the config.plist against the new version's oc_validate
 - **sign** efi drivers using provided keys for UEFI Secure Boot (optional)
 - **create** the efi vault for booting with `Misc->Security->Vault` set to `Secure`
@@ -42,10 +43,27 @@ Local EFI repository should have the `EFI` folder as a child, so the file struct
 
 # Usage Instructions
 
-- Make sure you have python 3.10 installed
-- Install required python packages using `pip install wget click pathlib requests six tqdm`
+## Step 1: Install Python
 
-Clone this repository:
+Make sure you have python 3.10 installed
+
+## Step 2: Install required python packages using `pip install wget click pathlib requests six tqdm`
+
+Install required python packages using `pip install wget click pathlib requests six tqdm`
+
+## Step 3: Create a multipass vm and install prerequisites
+
+Go to [https://multipass.run/install](https://multipass.run/install) to install multipass
+
+Once installed, open a terminal and type `multipass launch --name openchore` to create a multipass instance called openchore
+
+Afterwards, you should use the following command to install all the prerequisites
+
+```shell
+multipass exec openchore -- sh -c 'sudo apt update && sudo apt upgrade && sudo apt-get -y install unzip sbsigntool efitools'
+```
+
+## Step 4: Clone this repository
 
 ```shell
 gh repo clone rbutera/openchore
@@ -56,6 +74,20 @@ Sync submodules
 ```shell
 git submodule update --remote
 ```
+
+## Step 5: Configure environment variables
+
+```
+# CHANGE THE BELOW PATH
+cd /path/to/OpenChore
+cp .env.example .env
+nano .env
+```
+
+If you want to use the build feature then make sure you specify your `BOOT_VOLUME_NAME`
+If you want to use the backup feature to backup your boot EFI partition to a bootable USB stick, then specify `BACKUP_VOLUME_NAME`
+
+## Step 6: Ready
 
 Now you can run `./opencore.py`!
 
@@ -85,7 +117,7 @@ Options:
   --help                          Show this message and exit.
 ```
 
-## Examples
+# Usage Examples
 
 Downloading the default version and updating local efi repository (with no edits to config.plist):
 

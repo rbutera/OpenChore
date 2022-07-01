@@ -478,7 +478,8 @@ def openchore(
     # generate_apecid_partition()
     # download dependencies
     if download:
-        download_dependencies(version, release)
+        binaries = vault_only == False
+        download_dependencies(version, release, binaries)
     if not build and not vault_only:
         click.echo(
             click.style("Exiting (launched with '--no-build')")

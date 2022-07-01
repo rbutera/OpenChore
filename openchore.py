@@ -5,7 +5,6 @@ from datetime import datetime
 from glob import glob
 from pathlib import Path
 from pprint import pprint
-from webbrowser import get
 
 import click
 import requests
@@ -374,6 +373,13 @@ def write_to_efi(src, dest):
 @click.option("-A", "--generate-apecid", default=False, help=f'Generate and insert apecid if necessary')
 @click.option("-B", "--build/--no-build", default=True, help='Rebuild new EFI directory')
 @click.option("-D", "--download/--skip-download", default=True, help='Download the specified version of OpenCore')
+@click.option(
+    "-S",
+    "--backup-strategy",
+    type=click.choice(['local', 'volume', 'both'], case_sensitive=False),
+    default="local",
+    help="Backup strategy to use. Local backs up to a local 7z archive. Volume backs up to a specified volume name"
+)
 def openchore(
     version: str = VERSION,
     debug: bool = False,

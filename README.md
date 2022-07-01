@@ -47,7 +47,7 @@ Local EFI repository should have the `EFI` folder as a child, so the file struct
 
 Make sure you have python 3.10 installed
 
-## Step 2: Install required python packages using `pip install wget click pathlib requests six tqdm`
+## Step 2: Install required python packages using `pip install click pathlib requests`
 
 Install required python packages using `pip install wget click pathlib requests six tqdm`
 

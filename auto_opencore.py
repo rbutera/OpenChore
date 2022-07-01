@@ -363,17 +363,17 @@ def write_to_efi(src, dest):
 
 
 @click.command()
-@click.option("-v", "--version", default=VERSION, help=f'OpenCore version to use \(defaults to {VERSION}\)')
-@click.option("-d", "--debug/--release", default=False, help=f'Use DEBUG build of OpenCore')
-@click.option("-s", "--sign/--no-sign", default=False, help=f'Sign OpenCore')
-@click.option("-v", "--vault/--no-vault", default=True, help=f'Create Apple Vault')
-@click.option("-b", "--backup/--no-backup", default=False, help=f'Backup to the volume specified in environment variables')
-@click.option("-w", "--write/--no-write", default=False, help=f'Write built files to EFI partition')
-@click.option("-u", "--update/--no-update", default=True, help='Update local EFI repository using the downloaded version of OpenCore')
-@click.option("-r", "--reset/--no-reset", default=False, help=f'Reset the local EFI repository using git before starting')
-@click.option("-a", "--generate-apecid", default=False, help=f'Generate and insert apecid if necessary')
-@click.option("-b", "--build/--no-build", default=True, help='Rebuild new EFI directory')
-@click.option("-d", "--download/--skip-download", default=True, help='Download the specified version of OpenCore')
+@click.option("-V", "--version", default=VERSION, help=f'OpenCore version to use \(defaults to {VERSION}\)')
+@click.option("-D", "--debug/--release", default=False, help=f'Use DEBUG build of OpenCore')
+@click.option("-S", "--sign/--no-sign", default=False, help=f'Sign OpenCore')
+@click.option("-V", "--vault/--no-vault", default=True, help=f'Create Apple Vault')
+@click.option("-B", "--backup/--no-backup", default=False, help=f'Backup to the volume specified in environment variables')
+@click.option("-W", "--write/--no-write", default=False, help=f'Write built files to EFI partition')
+@click.option("-U", "--update/--no-update", default=True, help='Update local EFI repository using the downloaded version of OpenCore')
+@click.option("-R", "--reset/--no-reset", default=False, help=f'Reset the local EFI repository using git before starting')
+@click.option("-A", "--generate-apecid", default=False, help=f'Generate and insert apecid if necessary')
+@click.option("-B", "--build/--no-build", default=True, help='Rebuild new EFI directory')
+@click.option("-D", "--download/--skip-download", default=True, help='Download the specified version of OpenCore')
 def auto_opencore(
     version: str = VERSION,
     debug: bool = False,

@@ -85,6 +85,9 @@ def print_diagnostics(
 
 
 def clean_dir(dir: str):
+    num_files = glob(f'{dir}/**/*')
+    click.echo(click.style(
+        f'WARNING: there are {num_files} files in {dir} that will be removed!', fg='yellow', bold=True))
     os.system(f"rm -rf {dir}")
     click.echo(f"removed {dir}")
 

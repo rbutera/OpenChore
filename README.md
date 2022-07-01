@@ -45,10 +45,44 @@ Local EFI repository should have the `EFI` folder as a child, so the file struct
 - Make sure you have python 3.10 installed
 - Install required python packages using `pip install wget click pathlib requests six tqdm`
 
+Clone this repository:
+
+```shell
+gh repo clone rbutera/openchore
+```
+
+Sync submodules
+
+```shell
+git submodule update --remote
+```
+
+Now you can run `./opencore.py`!
+
 For help, run `./openchore.py --help`:
 
 ```
+❯ ./openchore.py --help
+Usage: openchore.py [OPTIONS]
 
+Options:
+  -V, --version TEXT              OpenCore version to use \(defaults to
+                                  0.8.1\)
+  -D, --debug / --release         Use DEBUG build of OpenCore
+  -S, --sign / --no-sign          Sign OpenCore
+  -V, --vault / --no-vault        Create Apple Vault
+  -B, --backup / --no-backup      Backup to the volume specified in
+                                  environment variables
+  -W, --write / --no-write        Write built files to EFI partition
+  -U, --update / --no-update      Update local EFI repository using the
+                                  downloaded version of OpenCore
+  -R, --reset / --no-reset        Reset the local EFI repository using git
+                                  before starting
+  -A, --generate-apecid BOOLEAN   Generate and insert apecid if necessary
+  -B, --build / --no-build        Rebuild new EFI directory
+  -D, --download / --skip-download
+                                  Download the specified version of OpenCore
+  --help                          Show this message and exit.
 ```
 
 ## Examples

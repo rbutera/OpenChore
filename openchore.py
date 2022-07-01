@@ -85,7 +85,8 @@ def print_diagnostics(
 
 
 def clean_dir(dir: str):
-    num_files = len(glob(f'{dir}/**/*'))
+    to_remove = glob(f'{dir}/**/*')
+    num_files = len(to_remove)
     if num_files > 0:
         click.echo(
             click.style(
@@ -94,6 +95,10 @@ def clean_dir(dir: str):
                 bold=True
             )
         )
+    for file in to_remove:
+        path = Path(file)
+        click.echo(f'removing {file}')
+        path.remove()
     os.system(f"rm -rf {dir}")
     click.echo(f"removed {dir}")
 

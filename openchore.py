@@ -9,14 +9,10 @@ from webbrowser import get
 
 import click
 import requests
-import tqdm
 
-import apecid
-import copy_to_efi
-import environment
-import sign as signlib
-from config import *
-from run import multipass, run
+from lib import apecid, copy_to_efi, environment, sign as signlib, config, run as runlib
+multipass = runlib.multipass
+run = runlib.run
 
 ENV = environment.get_env()
 VERSION = "0.8.1"
@@ -171,14 +167,14 @@ def update_local_efi_repository():
 def validate_config(vault: bool):
     # run ocvalidate
     ocvalidate_path = Path(f"{DOWNLOADS_DIR}/Utilities/ocvalidate/ocvalidate")
-    config_path = get_config_path()
+    config_path = config.get_config_path()
     Path.chmod(ocvalidate_path, 0o777)
     invalid = run([str(ocvalidate_path), config_path])
     if invalid:
         raise Exception(
             "ocvalidate returned a non-zero exit code. Please run ocvalidate manually for more information."
         )
-    config_plist = parse_config_file(USER_OPENCORE_DIR)
+    config_plist = config.parse_config_file(USER_OPENCORE_DIR)
     # check values for efi files
     drivers_list = list(map(lambda path: Path(
         path).name, get_user_drivers_list()))
@@ -193,7 +189,7 @@ def validate_config(vault: bool):
             click.echo(click.style(
                 f"will add {driver} to config", fg="yellow"))
             config_plist["UEFI"]["Drivers"] = existing_drivers
-            write_config_file(config_plist, USER_OPENCORE_DIR)
+            config.write_config_file(config_plist, USER_OPENCORE_DIR)
         else:
             click.echo(
                 click.style(
@@ -374,7 +370,7 @@ def write_to_efi(src, dest):
 @click.option("-A", "--generate-apecid", default=False, help=f'Generate and insert apecid if necessary')
 @click.option("-B", "--build/--no-build", default=True, help='Rebuild new EFI directory')
 @click.option("-D", "--download/--skip-download", default=True, help='Download the specified version of OpenCore')
-def auto_opencore(
+def openchore(
     version: str = VERSION,
     debug: bool = False,
     sign: bool = False,
@@ -388,7 +384,7 @@ def auto_opencore(
     download: bool = True,
 ):
     release = "DEBUG" if debug else "RELEASE"
-    click.echo(click.style('Welcome to AutoOpencore!',
+    click.echo(click.style('Welcome to OpenChore!',
                bg='black', fg='white', bold=True))
     click.echo(click.style(
         f"Building OpenCore ({release}) {version}", fg="green", bold=True))
@@ -480,4 +476,4 @@ def auto_opencore(
 
 
 if __name__ == "__main__":
-    auto_opencore()
+    openchore()

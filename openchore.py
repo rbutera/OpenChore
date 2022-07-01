@@ -85,7 +85,7 @@ def print_diagnostics(
 
 
 def clean_dir(dir: str):
-    to_remove = glob(f'{dir}/**/*')
+    to_remove = glob(f'{dir}/**/*.*')
     num_files = len(to_remove)
     if num_files > 0:
         click.echo(
@@ -150,7 +150,24 @@ def get_user_drivers_list_with_updates():
     return list(map(lambda driver: user_or_updated(driver), user_drivers))
 
 
+def dprint(msg: str):
+    border = '---------------------------'
+    click.echo('\n')
+    click.echo(click.style(border + msg + border,
+               bg="blue", fg="white", bold=True))
+    click.echo('\n')
+
+
+def print_start(name):
+    return dprint(f'{name} START')
+
+
+def print_done(name):
+    return dprint(f'{name} DONE')
+
+
 def update_local_efi_repository():
+    print_start('update_local_efi_repository')
     os.system(f"cp -R {USER_EFI_DIR} {UPDATED_DIR}")
     click.echo(
         "will update user files and copy to updated directory and then to signed directory"
@@ -172,13 +189,16 @@ def update_local_efi_repository():
     click.echo("Updated files are now:")
     # os.system(f'tree {UPDATED_DIR}')
     EFI_TEMP = f"{LOCAL_EFI_REPOSITORY}/EFI_TEMP"
-    os.system(f"rm -rf {EFI_TEMP}")
+    os.system(f"rm -rf {EFI_TEMP} > /dev/null")
     os.system(f"cp -R {USER_EFI_DIR}/* {EFI_TEMP}")
-    os.system(f"rm -rf {USER_EFI_DIR}")
+    os.system(f"rm -rf {USER_EFI_DIR} > /dev/null")
     os.system(f"cp -R {UPDATED_DIR}/* {USER_EFI_DIR}")
-    os.system("rm -rf {EFI_TEMP}")
+    click.echo(f'Removing {UPDATED_DIR}')
+    os.system(f'rm -rf {UPDATED_DIR} > /dev/null')
+    os.system("rm -rf {EFI_TEMP} > /dev/null")
     click.echo("Finished cleaning up EFI_TEMP. Opencore dir contents are now:")
     os.system(f"ls {USER_OPENCORE_DIR}")
+    print_done('update_local_efi_repository')
 
 
 def validate_config(vault: bool):

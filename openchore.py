@@ -376,7 +376,7 @@ def write_to_efi(src, dest):
 @click.option(
     "-S",
     "--backup-strategy",
-    type=click.choice(['local', 'volume'], case_sensitive=False),
+    type=click.Choice(['local', 'volume'], case_sensitive=False),
     default="local",
     help="Backup strategy to use. Local backs up to a local 7z archive. Volume also backs up to a specified volume name"
 )

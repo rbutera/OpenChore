@@ -367,7 +367,7 @@ def write_to_efi(src, dest):
 @click.option("-d", "--debug", default=False, help=f'Use DEBUG build of OpenCore')
 @click.option("-s", "--sign", default=False, help=f'Sign OpenCore')
 @click.option("-v", "--vault", default=True, help=f'Create Apple Vault')
-@click.option("-b", "--backup", default=False, help=f'Backup to the volume specified in environment variables')
+@click.option("-b", "--backup/--no-backup", default=False, help=f'Backup to the volume specified in environment variables')
 @click.option("-w", "--write", default=False, help=f'Write built files to EFI partition')
 @click.option("-u", "--update", default=True, help='Update local EFI repository using the downloaded version of OpenCore')
 @click.option("-r", "--reset", default=False, help=f'Reset the local EFI repository using git before starting')
@@ -403,11 +403,6 @@ def auto_opencore(
     create_directories()
     if backup or build:
         print("\n\n\n")
-        click.echo(
-            click.style(
-                "Backing up current EFI folder", bold=True
-            )
-        )
         click.echo(
             click.style(
                 "Please enter the password for the currently logged in user to continue.",
